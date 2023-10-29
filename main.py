@@ -4,6 +4,7 @@ import sqlite3
 
 #Основное окно
 class Main(tk.Frame):
+
     #Функция вызывающаяся при создании сущности
     def __init__(self, root):
         super().__init__(root)
@@ -13,26 +14,32 @@ class Main(tk.Frame):
 
     #Структура окна
     def init_main(self):
+
         #Добавление виджетов
         toolbar = tk.Frame(bg='#d7d8e0', bd=2)
         toolbar.pack(side=tk.TOP, fill=tk.X)
 
+        #Кнопка добавления контактов
         self.add_img = tk.PhotoImage(file='.\итоговый проект\img\\add.png')
         btn_open_dialog = tk.Button(toolbar, bg='#d7d8e0', bd=0, image=self.add_img, command=self.open_dialog)
         btn_open_dialog.pack(side=tk.LEFT)
 
+        #Кнопка изменения данных контактов
         self.update_img = tk.PhotoImage(file='.\итоговый проект\img\\update.png')
         btn_edit_dialog = tk.Button(toolbar, bg='#d7d8e0', bd=0, image=self.update_img, command=self.open_update_dialog)
         btn_edit_dialog.pack(side=tk.LEFT)
 
+        #Кнопка удаления контактов
         self.delete_img = tk.PhotoImage(file='.\итоговый проект\img\\delete.png')
         btn_delete = tk.Button(toolbar, bg='#d7d8e0', bd=0, image=self.delete_img, command=self.delete_record)
         btn_delete.pack(side=tk.LEFT)
 
+        #Кнопка поиска контактов
         self.search_img = tk.PhotoImage(file='.\итоговый проект\img\\search.png')
         btn_search = tk.Button(toolbar, bg='#d7d8e0', bd=0, image=self.search_img, command=self.open_seach_dialog)
         btn_search.pack(side=tk.LEFT)
 
+        #Кнопка обновления доски
         self.refresh_img = tk.PhotoImage(file='.\итоговый проект\img\\refresh.png')
         btn_refresh = tk.Button(toolbar, bg='#d7d8e0', bd=0, image=self.refresh_img, command=self.view_records)
         btn_refresh.pack(side=tk.LEFT)
@@ -53,7 +60,7 @@ class Main(tk.Frame):
         #Прижато к левой стенке окна
         self.tree.pack(side=tk.LEFT)
 
-    #Открытия дочернего окна
+    #Открытие дочерних окон
     def open_dialog(self):
         Child()
 
@@ -62,7 +69,8 @@ class Main(tk.Frame):
 
     def open_seach_dialog(self):
         Search()
-
+    
+    #Поиск нужных контактов
     def search_records(self, name):
         name = '%' + name + '%'
         self.db.c.execute('SELECT * FROM db WHERE name LIKE ?', (name,))
@@ -80,20 +88,22 @@ class Main(tk.Frame):
         [self.tree.delete(i) for i in self.tree.get_children()]
         [self.tree.insert('', 'end',  values=row) for row in self.db.c.fetchall()]
     
+    #Обновление контакта
     def update_record(self, name, tel, email):
         self.db.c.execute('UPDATE db SET name=?, tel =?, email=? WHERE id=?', (name, tel, email, self.tree.set(self.tree.selection()[0], '#1')))
         self.db.conn.commit()
         self.view_records()
 
+    #Удаление контакта
     def delete_record(self):
         for select_item in self.tree.selection():
             self.db.c.execute('DELETE FROM db WHERE id=?', self.tree.set(select_item, '#1'))
-        
         self.db.conn.commit()
         self.view_records()
 
 #Дочернее окно, добавление контакта
 class Child(tk.Toplevel):
+
     #Функция вызывающаяся при создании сущности
     def __init__(self):
         super().__init__(root)
@@ -102,6 +112,7 @@ class Child(tk.Toplevel):
     
     #Создание окна
     def init_child(self):
+
         #Свойства окна
         self.title('Добавить')
         self.geometry('400x220')
@@ -136,7 +147,10 @@ class Child(tk.Toplevel):
             self.view.records(self.entry_name.get(), self.entry_email.get(), self.entry_tel.get()))
         self.btn_ok.bind('<Button-1>', lambda event: self.destroy(), add='+')
 
+#Дочернее окно для обновления контакта
 class Update(Child):
+
+    #Функция вызывающаяся при создании сущности
     def __init__(self):
         super().__init__()
         self.init_edit()
@@ -144,7 +158,10 @@ class Update(Child):
         self.db = db
         self.default_data()
 
+    #Создание окна
     def init_edit(self):
+
+        #Свойства окна
         self.title('Ркдактировать контакт')
         btn_edit = ttk.Button(self, text='Редактировать')
         btn_edit.place(x=180, y=170)
@@ -155,6 +172,7 @@ class Update(Child):
         btn_edit.bind('<Button-1>', lambda event: self.destroy(), add='+')
         self.btn_ok.destroy()
 
+    #Заполняет поля уже имеющимися данными
     def default_data(self):
         self.db.c.execute('SELECT * FROM db WHERE id=?', (self.view.tree.set(self.view.tree.selection()[0], '#1')))
         row = self.db.c.fetchone()
@@ -162,17 +180,24 @@ class Update(Child):
         self.entry_email.insert(0, row[2])
         self.entry_tel.insert(0, row[3])
 
+#Дочернее окно для поиска контактов
 class Search(tk.Toplevel):
+
+    #Функция вызывающаяся при создании сущности
     def __init__(self):
         super().__init__()
         self.init_search()
         self.view = app
     
+    #Создание окна
     def init_search(self):
+
+        #Свойства окна
         self.title('Поиск контакта')
         self.geometry('300x300')
         self.resizable(False, False)
 
+        #Создание виджетов
         label_search = tk.Label(self, text='Имя:')
         label_search.place(x=50, y=20)
 
