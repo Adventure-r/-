@@ -45,17 +45,19 @@ class Main(tk.Frame):
         btn_refresh.pack(side=tk.LEFT)
 
         #Расположение виджетов
-        self.tree = ttk.Treeview(self, columns=('ID', 'name', 'tel', 'email'), height=45, show='headings')
+        self.tree = ttk.Treeview(self, columns=('ID', 'name', 'tel', 'email', 'salary'), height=45, show='headings')
         self.tree.column('ID', width=30, anchor=tk.CENTER)
         self.tree.column('name', width=300, anchor=tk.CENTER)
         self.tree.column('tel', width=150, anchor=tk.CENTER)
         self.tree.column('email', width=150, anchor=tk.CENTER)
+        self.tree.column('salary', width=150, anchor=tk.CENTER)
 
         #Отображение более приятных наименований для колонок
         self.tree.heading('ID', text='ID')
         self.tree.heading('name', text='ФИО')
         self.tree.heading('tel', text='Телефон')
         self.tree.heading('email', text='E-mail')
+        self.tree.heading('salary', text='Зарплата')
 
         #Прижато к левой стенке окна
         self.tree.pack(side=tk.LEFT)
@@ -78,8 +80,8 @@ class Main(tk.Frame):
         [self.tree.insert('', 'end', values=row) for row in self.db.c.fetchall()]
 
     #Добавление записи
-    def records(self, name, tel, email):
-        self.db.insert_data(name, tel, email)
+    def records(self, name, tel, email, salary):
+        self.db.insert_data(name, tel, email, salary)
         self.view_records()
 
     #Просмотр всех записей
@@ -89,8 +91,8 @@ class Main(tk.Frame):
         [self.tree.insert('', 'end',  values=row) for row in self.db.c.fetchall()]
     
     #Обновление контакта
-    def update_record(self, name, tel, email):
-        self.db.c.execute('UPDATE db SET name=?, tel =?, email=? WHERE id=?', (name, tel, email, self.tree.set(self.tree.selection()[0], '#1')))
+    def update_record(self, name, tel, email, salary):
+        self.db.c.execute('UPDATE db SET name=?, tel =?, email=?, salary=? WHERE id=?', (name, tel, email, salary, self.tree.set(self.tree.selection()[0], '#1')))
         self.db.conn.commit()
         self.view_records()
 
@@ -127,6 +129,8 @@ class Child(tk.Toplevel):
         label_select.place(x=50, y=80)
         label_sum = tk.Label(self, text='E-mail:')
         label_sum.place(x=50, y=110)
+        label_salary = tk.Label(self, text='Зарплата:')
+        label_salary.place(x=50, y=140)
 
         #Расположение виджетов
         self.entry_name = ttk.Entry(self)
@@ -135,6 +139,8 @@ class Child(tk.Toplevel):
         self.entry_email.place(x=200, y=80)
         self.entry_tel = ttk.Entry(self)
         self.entry_tel.place(x=200, y=110)
+        self.entry_salary = ttk.Entry(self)
+        self.entry_salary.place(x=200, y=140)
 
         #Кнопка "Закрыть"
         self.btn_cancel = ttk.Button(self, text='Закрыть', command=self.destroy)
@@ -144,7 +150,7 @@ class Child(tk.Toplevel):
         self.btn_ok = ttk.Button(self, text='Добавить')
         self.btn_ok.place(x=220, y=170)
         self.btn_ok.bind('<Button-1>', lambda event:
-            self.view.records(self.entry_name.get(), self.entry_email.get(), self.entry_tel.get()))
+            self.view.records(self.entry_name.get(), self.entry_email.get(), self.entry_tel.get(), self.entry_salary.get()))
         self.btn_ok.bind('<Button-1>', lambda event: self.destroy(), add='+')
 
 #Дочернее окно для обновления контакта
@@ -162,13 +168,14 @@ class Update(Child):
     def init_edit(self):
 
         #Свойства окна
-        self.title('Ркдактировать контакт')
+        self.title('Редактировать контакт')
         btn_edit = ttk.Button(self, text='Редактировать')
         btn_edit.place(x=180, y=170)
         btn_edit.bind('<Button-1>', lambda event:
             self.view.update_record(self.entry_name.get(), 
                               self.entry_email.get(), 
-                              self.entry_tel.get()))
+                              self.entry_tel.get(),
+                              self.entry_salary.get()))
         btn_edit.bind('<Button-1>', lambda event: self.destroy(), add='+')
         self.btn_ok.destroy()
 
@@ -179,6 +186,7 @@ class Update(Child):
         self.entry_name.insert(0, row[1])
         self.entry_email.insert(0, row[2])
         self.entry_tel.insert(0, row[3])
+        self.entry_salary.insert(0, row[4])
 
 #Дочернее окно для поиска контактов
 class Search(tk.Toplevel):
@@ -220,35 +228,41 @@ class DB:
         #Подключение бд
         self.conn = sqlite3.connect('db.db')
         self.c = self.conn.cursor()
-        
+
         #Создание таблицы
         self.c.execute('''CREATE TABLE IF NOT EXISTS db (
                        id INTEGER PRIMARY KEY,
                        name TEXT,
                        tel TEXT,
-                       email TEXT
+                       email TEXT,
+                       salary INTEGER
 
         );''')
         self.conn.commit()
 
     #Добавление данный в таблицу
-    def insert_data(self, name, tel, email):
-        self.c.execute('INSERT INTO db(name, tel, email) VALUES (?, ?, ?);', (name, tel, email))
+    def insert_data(self, name, tel, email, salary):
+        self.c.execute('INSERT INTO db(name, tel, email, salary) VALUES (?, ?, ?, ?);', (name, tel, email, salary))
         self.conn.commit()
     
 
 #Запуск программы если был открыт этот файл
 if __name__ == '__main__':
+
     #Создание приложения  
     root = tk.Tk()
+
     #Создание бд
     db = DB()
+
     #Открытие основного окна
     app = Main(root)
     app.pack()
+
     #Свойства этого окна
     root.title('Телефонная книга')
-    root.geometry('665x450')
+    root.geometry('800x450')
     root.resizable(False, False)
+    
     #Необхадимая функция обеспечивающая работу приложения
     root.mainloop()
